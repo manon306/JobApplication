@@ -14,6 +14,11 @@ namespace JobApplication.infrastructure.Repository
         }
         public async Task Apply(int jobId, string UserId)
         {
+            var job = await _context.Jobs.FindAsync(jobId)
+                ?? throw new KeyNotFoundException("Job not found.");
+
+            if (!job.isActive) throw new InvalidOperationException("Job is closed.");
+
             var candidate = await _context.Candidates
                 .FirstOrDefaultAsync(c => c.UserId == UserId);
 
@@ -21,6 +26,11 @@ namespace JobApplication.infrastructure.Repository
             {
                 throw new Exception("Candidate not found.");
             }
+
+            if (await _context.Applications.AnyAsync(a => a.JobId == jobId && a.CandidateId == candidate.ID))
+                throw new InvalidOperationException("Already applied.");
+            
+
             var application = new DataModel.Entities.Application
             {
                 JobId = jobId,
@@ -45,11 +55,29 @@ namespace JobApplication.infrastructure.Repository
             {
                 throw new UnauthorizedAccessException();
             }
-            if (application != null && (application.Status is jobApplicayionStatus.Applied || application.Status is jobApplicayionStatus.UnderReview))
+            if (application.Status is jobApplicayionStatus.Applied || application.Status is jobApplicayionStatus.UnderReview)
             {
-                _context.Applications.Remove(application);
+                application.Status = jobApplicayionStatus.Canceled;
+                application.StatusUpdatedAt = DateTime.UtcNow;
             }
             await _context.SaveChangesAsync();
+        }
+        private bool IsValidTransition(jobApplicayionStatus current, jobApplicayionStatus next)
+        {
+            return current switch
+            {
+                jobApplicayionStatus.Applied =>
+                    next == jobApplicayionStatus.UnderReview,
+
+                jobApplicayionStatus.UnderReview =>
+                    next == jobApplicayionStatus.InterView,
+
+                jobApplicayionStatus.InterView =>
+                    next == jobApplicayionStatus.Accepted ||
+                    next == jobApplicayionStatus.Rejected,
+
+                _ => false
+            };
         }
         public async Task UpdateStatusAsync(int applicationId,jobApplicayionStatus newStatus,string userId)
         {
@@ -64,7 +92,12 @@ namespace JobApplication.infrastructure.Repository
             {
                 throw new UnauthorizedAccessException();
             }
-             application.Status = newStatus;
+            if (!IsValidTransition(application.Status, newStatus))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot change status from {application.Status} to {newStatus}.");
+            }
+            application.Status = newStatus;
              application.StatusUpdatedAt = DateTime.UtcNow;
              await _context.SaveChangesAsync();
             

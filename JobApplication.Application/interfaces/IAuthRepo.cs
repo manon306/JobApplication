@@ -14,5 +14,6 @@ namespace JobApplication.Application.interfaces
         Task SaveRefreshTokenAsync(RefreshToken refreshToken);
         Task<RefreshToken?> GetRefreshTokenAsync(string token);
         Task LogoutAsync(string refreshToken);
+        Task CreateCandidateAsync(Candidate candidate);
     }
 }

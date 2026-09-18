@@ -28,7 +28,12 @@ namespace JobApplication.infrastructure.Persistence
                 .WithMany()
                 .HasForeignKey(j => j.ClosedByID)
                 .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<Candidate>()
+                .HasIndex(x => x.UserId)
+                .IsUnique();
+
         }
+
     }
 
 }

@@ -63,6 +63,12 @@ namespace JobApplication.Application.Services.imp
                 throw new Exception("Failed to assign Candidate role.");
             }
             var roles = await _userManager.GetRolesAsync(user);
+            await _authRepo.CreateCandidateAsync(new Candidate
+            {
+                UserId = user.Id,
+                Name = dto.FullName,
+                Email = dto.Email
+            });
             var accessToken = _jwtService.GenerateToken(user.Id, user.Email!, roles);
             var refreshToken = _jwtService.GenerateRefreshToken();
             var refreshTokenEntity = new RefreshToken
@@ -130,9 +136,9 @@ namespace JobApplication.Application.Services.imp
                 RefreshToken = newRefreshToken
             };
         }
-        public async Task LogoutAsync(string refreshToken)
+        public async Task LogoutAsync(LogoutRequestDto dto)
         {
-             await _authRepo.LogoutAsync(refreshToken);
+             await _authRepo.LogoutAsync(dto.RefreshToken);
         }
     }
 }

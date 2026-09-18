@@ -1,5 +1,6 @@
 ﻿using JobApplication.Application.interfaces;
 using JobApplication.DataModel.Entities;
+using JobApplication.DataModel.Enums;
 using System;
 
 namespace JobApplication.Application.Services.imp
@@ -11,6 +12,7 @@ namespace JobApplication.Application.Services.imp
         {
             this.applicationRepo = applicationRepo;
         }
+        
         public async Task Apply(int jobId, string UserId)
         {
             await applicationRepo.Apply(jobId, UserId);
@@ -21,6 +23,7 @@ namespace JobApplication.Application.Services.imp
         }
         public async Task UpdateStatusAsync(int applicationId, DataModel.Enums.jobApplicayionStatus newStatus,string userId)
         {
+
             await applicationRepo.UpdateStatusAsync( applicationId, newStatus,userId);
         }
     }

@@ -33,7 +33,7 @@ namespace JobApplication.API.Controllers
             return Ok(response);
         }
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] string refreshToken)
+        public async Task<IActionResult> Logout([FromBody] LogoutRequestDto refreshToken)
         {
             await _authService.LogoutAsync(refreshToken);
             return Ok(new { message = "Logged out successfully." });

@@ -7,6 +7,6 @@ namespace JobApplication.Application.Services
         Task<AuthResponseDto> LoginAsync(LoginDto dto);
         Task<AuthResponseDto> RegisterAsync(RegisterDto dto);
         Task<AuthResponseDto> RefreshTokenAsync(RefreshRequestDto dto);
-        Task LogoutAsync(string refreshToken);
+        Task LogoutAsync(LogoutRequestDto dto);
     }
 }

@@ -31,6 +31,9 @@ namespace JobApplication.infrastructure.Repository
                 throw new UnauthorizedAccessException(
                     "You are not allowed to close this job.");
             }
+            if (!job.isActive)
+                throw new InvalidOperationException(
+                    "Job is already closed.");
             job.isActive = false;
             job.ClosedAt = DateTime.UtcNow;
             job.ClosedByID = userId; 

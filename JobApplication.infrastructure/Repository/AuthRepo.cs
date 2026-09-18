@@ -74,5 +74,10 @@ namespace JobApplication.infrastructure.Repository
             storedToken.RevokedAt = DateTime.UtcNow; 
             await _context.SaveChangesAsync();
         }
+        public async Task CreateCandidateAsync(Candidate candidate)
+        {
+            _context.Candidates.Add(candidate);
+            await _context.SaveChangesAsync();
+        }
     }
 }
