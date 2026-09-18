@@ -2,6 +2,7 @@
 using JobApplication.Application.interfaces;
 using JobApplication.Application.Services;
 using JobApplication.Application.Services.imp;
+using JobApplication.Application.Settings;
 using JobApplication.DataModel.Entities;
 using JobApplication.infrastructure.Persistence;
 using JobApplication.infrastructure.Repository;
@@ -11,15 +12,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
+using JobApplication.DataModel.Constants;
 
 namespace JobApplication
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
+            builder.Services.Configure<JwtSettings>(
+                builder.Configuration.GetSection("Jwt"));
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddScoped<IJobServices, JobServices>();
@@ -34,23 +39,31 @@ namespace JobApplication
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDBContext>()
                 .AddDefaultTokenProviders();
-
+            var jwtSettings = builder.Configuration
+                            .GetSection("Jwt")
+                            .Get<JwtSettings>()
+                            ?? throw new InvalidOperationException("JWT settings not found.");
             builder.Services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
                     {
-                        ValidateIssuerSigningKey = true,
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
 
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes("ThisIsMySuperSecretKey12345678901")
-                        ),
+                            IssuerSigningKey = new SymmetricSecurityKey(
+                                Encoding.UTF8.GetBytes(jwtSettings.Key)
+                            ),
 
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                });
+                            ValidateIssuer = true,
+                            ValidIssuer = jwtSettings.Issuer,
+
+                            ValidateAudience = true,
+                            ValidAudience = jwtSettings.Audience,
+
+                            ValidateLifetime = true
+                        };
+                    });
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
@@ -63,7 +76,26 @@ namespace JobApplication
                 options.UseSqlServer(connectionString));
 
             var app = builder.Build();
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider
+                    .GetRequiredService<RoleManager<IdentityRole>>();
 
+                var roles = new[]
+                {
+                    Roles.Candidate,
+                    Roles.Recruiter,
+                    Roles.Admin
+                };
+
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+            }
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -86,7 +118,13 @@ namespace JobApplication
 "fullName": "Menna",
   "email": "Menna@gmail.com",
   "password": "Menna@3062005"
-}*/
+}
+{
+  "fullName": "Menna",
+  "email": "Menna@12345",
+  "password": "Menna@3062005"
+}
+*/
 /*
  * {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjNmYTE4OThkLWE3YzMtNDlkNS05NzkyLTc1ZWNiM2NlZTQzOCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6Ik1lbm5hQGdtYWlsLmNvbSIsImV4cCI6MTc4OTc0MDM5MX0.SUwBwKadUMTuPKr5KCqSrtVkkvXdD1sx1TSficiLd9w",

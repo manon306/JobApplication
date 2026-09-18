@@ -1,18 +1,22 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
+﻿using JobApplication.Application.Settings;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace JobApplication.Application.Services.imp
 {
     public class JwtService : IJwtService
     {
-        public string GenerateToken(string userId, string email) 
+        private readonly JwtSettings _jwtSettings;
+
+        public JwtService(IOptions<JwtSettings> jwtSettings)
+        {
+            _jwtSettings = jwtSettings.Value;
+        }
+        public string GenerateToken(string userId, string email, IEnumerable<string> roles) 
         {
             // Create claims for the token => info in the token
             var claims = new List<Claim>
@@ -20,9 +24,13 @@ namespace JobApplication.Application.Services.imp
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Email, email)
             };
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
             // Create a symmetric security key using a secret key
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("ThisIsMySuperSecretKey12345678901")
+                Encoding.UTF8.GetBytes(_jwtSettings.Key)
             );
             // Create signing credentials using the key and the HMAC SHA256 algorithm
             var credentials = new SigningCredentials(
@@ -32,7 +40,9 @@ namespace JobApplication.Application.Services.imp
             // Create the JWT token with claims, expiration, and signing credentials
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
+                expires: DateTime.UtcNow.AddMinutes(_jwtSettings.DurationInMinutes),
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
                 signingCredentials: credentials
             );
             // Generate the token string

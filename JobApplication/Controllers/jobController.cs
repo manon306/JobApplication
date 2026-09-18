@@ -1,12 +1,13 @@
 ﻿using JobApplication.Application.DTOs;
 using JobApplication.Application.Services;
+using JobApplication.DataModel.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace JobApplication.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/job")]
     [ApiController]
     public class jobController : ControllerBase
     {
@@ -15,10 +16,12 @@ namespace JobApplication.API.Controllers
         {
             _jobServices = jobServices;
         }
-        [Authorize]
+        
+        [Authorize(Roles = Roles.Recruiter)]
         [HttpPost]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobDTO Dto)
         {
+            Console.WriteLine("========== CREATE JOB HIT ==========");
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -27,7 +30,7 @@ namespace JobApplication.API.Controllers
             var jobId = await _jobServices.CreateAsync(Dto,userId);
             return CreatedAtAction(nameof(CreateJob), new { id = jobId }, null);
         }
-        [Authorize]
+        [Authorize(Roles = Roles.Recruiter)]
         [HttpPost]
         [Route("{jobId}/close")]
         public async Task<IActionResult> Close(int jobId)

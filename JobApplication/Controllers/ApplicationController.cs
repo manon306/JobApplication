@@ -1,5 +1,6 @@
 ﻿using JobApplication.Application.Services;
 using JobApplication.Application.Services.imp;
+using JobApplication.DataModel.Constants;
 using JobApplication.DataModel.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +18,7 @@ namespace JobApplication.API.Controllers
         {
             _applicationService = applicationService;
         }
-        [Authorize]
+        [Authorize(Roles = Roles.Candidate)]
         [HttpPost("{jobId}/apply")]
         public async Task<IActionResult> Apply(int jobId)
         {
@@ -27,7 +28,7 @@ namespace JobApplication.API.Controllers
 
             return Ok();
         }
-        [Authorize]
+        [Authorize(Roles = Roles.Candidate)]
         [HttpDelete]
         [Route("{id}")]
         public async Task<IActionResult> CancleApp(int id)
@@ -40,7 +41,7 @@ namespace JobApplication.API.Controllers
             await _applicationService.CancleApp(id,userId);
             return Ok();
         }
-        [Authorize]
+        [Authorize(Roles = Roles.Recruiter)]
         [HttpPut("{applicationId}/status")]
         public async Task<IActionResult> UpdateStatus(int applicationId,[FromBody] jobApplicayionStatus newStatus)
         {

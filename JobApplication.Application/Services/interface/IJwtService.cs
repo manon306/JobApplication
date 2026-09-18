@@ -9,7 +9,7 @@ namespace JobApplication.Application.Services
 {
     public interface IJwtService
     {
-        string GenerateToken(string userId, string email);
+        string GenerateToken(string userId, string email, IEnumerable<string> roles);
         public string GenerateRefreshToken();
     }
 }

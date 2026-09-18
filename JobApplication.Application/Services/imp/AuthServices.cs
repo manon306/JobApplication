@@ -1,12 +1,8 @@
 ﻿using JobApplication.Application.DTOs;
 using JobApplication.Application.interfaces;
+using JobApplication.DataModel.Constants;
 using JobApplication.DataModel.Entities;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JobApplication.Application.Services.imp
 {
@@ -14,16 +10,18 @@ namespace JobApplication.Application.Services.imp
     {
         private readonly IAuthRepo _authRepo;
         private readonly IJwtService _jwtService;
-        public AuthServices(IAuthRepo authRepo, IJwtService jwtService)
+        private readonly UserManager<ApplicationUser> _userManager;
+        public AuthServices(IAuthRepo authRepo, IJwtService jwtService, UserManager<ApplicationUser> userManager)
         {
             _authRepo = authRepo;
             _jwtService = jwtService;
+            _userManager = userManager;
         }
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
             var user = await _authRepo.LoginAsync(dto.Email, dto.Password);
-
-            var accessToken = _jwtService.GenerateToken(user.Id, user.Email!);
+            var roles = await _userManager.GetRolesAsync(user);
+            var accessToken = _jwtService.GenerateToken(user.Id, user.Email!,roles);
 
             var refreshToken = _jwtService.GenerateRefreshToken();
 
@@ -35,7 +33,7 @@ namespace JobApplication.Application.Services.imp
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
             };
 
-            _authRepo.SaveRefreshTokenAsync(refreshTokenEntity);
+            await _authRepo.SaveRefreshTokenAsync(refreshTokenEntity);
 
             return new AuthResponseDto
             {
@@ -51,9 +49,21 @@ namespace JobApplication.Application.Services.imp
                 Email = dto.Email,
                 FullName = dto.FullName
             };
-            var result =await _authRepo.RegisterAsync(user, dto.Password);
+            var result = await _authRepo.RegisterAsync(user, dto.Password);
 
-            var accessToken = _jwtService.GenerateToken(user.Id, user.Email!);
+            if (result != true)
+            {
+                throw new Exception("User registration failed.");
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, Roles.Candidate);
+
+            if (!roleResult.Succeeded)
+            {
+                throw new Exception("Failed to assign Candidate role.");
+            }
+            var roles = await _userManager.GetRolesAsync(user);
+            var accessToken = _jwtService.GenerateToken(user.Id, user.Email!, roles);
             var refreshToken = _jwtService.GenerateRefreshToken();
             var refreshTokenEntity = new RefreshToken
             {
@@ -62,7 +72,7 @@ namespace JobApplication.Application.Services.imp
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
             };
-            _authRepo.SaveRefreshTokenAsync(refreshTokenEntity);
+            await _authRepo.SaveRefreshTokenAsync(refreshTokenEntity);
             return new AuthResponseDto
             {
                 AccessToken = accessToken,
@@ -94,10 +104,11 @@ namespace JobApplication.Application.Services.imp
             {
                 throw new UnauthorizedAccessException("User not found.");
             }
-
+            var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _jwtService.GenerateToken(
                 user.Id,
-                user.Email!);
+                user.Email!
+                , roles);
 
             var newRefreshToken = _jwtService.GenerateRefreshToken();
 
