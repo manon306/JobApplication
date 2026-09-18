@@ -31,7 +31,7 @@ namespace JobApplication.API.Controllers
             return CreatedAtAction(nameof(CreateJob), new { id = jobId }, null);
         }
         [Authorize(Roles = Roles.Recruiter)]
-        [HttpPost]
+        [HttpPut]
         [Route("{jobId}/close")]
         public async Task<IActionResult> Close(int jobId)
         {

@@ -36,8 +36,9 @@ namespace JobApplication.infrastructure.Repository
                 JobId = jobId,
                 CandidateId = candidate.ID,
                 AppliedAt = DateTime.UtcNow,
-                Status = DataModel.Enums.jobApplicayionStatus.UnderReview,
+                Status = DataModel.Enums.jobApplicayionStatus.Applied,
                 StatusUpdatedAt = DateTime.UtcNow
+
             };
             await _context.Applications.AddAsync(application);
             await _context.SaveChangesAsync();
@@ -58,7 +59,7 @@ namespace JobApplication.infrastructure.Repository
             if (application.Status is jobApplicayionStatus.Applied || application.Status is jobApplicayionStatus.UnderReview)
             {
                 application.Status = jobApplicayionStatus.Canceled;
-                application.StatusUpdatedAt = DateTime.UtcNow;
+                application.CanceledAt = DateTime.UtcNow;
             }
             await _context.SaveChangesAsync();
         }

@@ -135,7 +135,7 @@ namespace JobApplication
 
 Recuter 
 {
-    "email": "Menna@gmail.com",
+    "email": "Menna2@gmail.com",
   "password": "Menna@12345"
 }
 */

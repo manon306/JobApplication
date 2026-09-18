@@ -12,5 +12,6 @@ namespace JobApplication.DataModel.Entities
         public DateTime AppliedAt { get; set; }
         public jobApplicayionStatus Status { get; set; }
         public DateTime StatusUpdatedAt { get; set; }
+        public DateTime? CanceledAt { get; set; }
     }
 }
