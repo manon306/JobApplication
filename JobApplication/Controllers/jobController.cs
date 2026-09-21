@@ -1,6 +1,9 @@
 ﻿using JobApplication.Application.DTOs;
+using JobApplication.Application.Features.job.Command.Close;
+using JobApplication.Application.Features.job.Command.CreateJob;
 using JobApplication.Application.Services;
 using JobApplication.DataModel.Constants;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,33 +14,26 @@ namespace JobApplication.API.Controllers
     [ApiController]
     public class jobController : ControllerBase
     {
-        private readonly IJobServices _jobServices;
-        public jobController(IJobServices jobServices)
+        private readonly IMediator _Mediator;
+        public jobController(IMediator mediator)
         {
-            _jobServices = jobServices;
+            _Mediator = mediator;
         }
-        
+
         [Authorize(Roles = Roles.Recruiter)]
         [HttpPost]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobDTO Dto)
         {
-            Console.WriteLine("========== CREATE JOB HIT ==========");
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var jobId = await _jobServices.CreateAsync(Dto,userId);
-            return CreatedAtAction(nameof(CreateJob), new { id = jobId }, null);
+            var result =await _Mediator.Send(new CreateJobCommand { CreateJobDTO = Dto });
+            return Ok(result);
         }
         [Authorize(Roles = Roles.Recruiter)]
         [HttpPut]
         [Route("{jobId}/close")]
         public async Task<IActionResult> Close(int jobId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            await _jobServices.Close(jobId,userId);
-            return Ok();
+            var result = await _Mediator.Send(new CloseCommand { Id = jobId});
+            return NoContent();
         }
     }
 }

@@ -1,4 +1,5 @@
 
+using JobApplication.Application.Features.job.Command.CreateJob;
 using JobApplication.Application.interfaces;
 using JobApplication.Application.Services;
 using JobApplication.Application.Services.imp;
@@ -10,10 +11,9 @@ using JobApplication.infrastructure.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 
 namespace JobApplication
@@ -36,7 +36,8 @@ namespace JobApplication
             builder.Services.AddScoped<IAuthRepo, AuthRepo>();
             builder.Services.AddScoped<IAuthService, AuthServices>();
             builder.Services.AddScoped<IJwtService, JwtService>();
-
+            builder.Services.AddMediatR(cfg =>
+                    cfg.RegisterServicesFromAssembly(typeof(CreateJobCommand).Assembly));
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDBContext>()
@@ -73,8 +74,34 @@ namespace JobApplication
                         };
                     });
 
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter your JWT token."
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+            });
             var connectionString =
             builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string"
@@ -107,8 +134,8 @@ namespace JobApplication
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
-                app.MapScalarApiReference();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
@@ -116,7 +143,20 @@ namespace JobApplication
             app.UseAuthorization();
 
 
-            app.MapControllers();
+            try
+            {
+                app.MapControllers();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                foreach (var loaderException in ex.LoaderExceptions)
+                {
+                    Console.WriteLine("========== LOADER EXCEPTION ==========");
+                    Console.WriteLine(loaderException?.ToString());
+                }
+
+                throw;
+            }
 
             app.Run();
         }
