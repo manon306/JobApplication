@@ -1,4 +1,4 @@
-﻿using JobApplication.Application.DTOs;
+using JobApplication.Application.DTOs;
 using JobApplication.Application.Features.job.Command.Close;
 using JobApplication.Application.Features.job.Command.CreateJob;
 using JobApplication.DataModel.Constants;
@@ -14,8 +14,17 @@ namespace JobApplication.API.Controllers
     {
         private readonly IMediator _Mediator = mediator;
         
+        /// <summary>
+        /// Creates a new job posting for the authenticated recruiter.
+        /// </summary>
+        /// <param name="Dto">The data transfer object containing job details such as title and description.</param>
+        /// <returns>The unique identifier of the newly created job.</returns>
         [Authorize(Roles = Roles.Recruiter)]
         [HttpPost]
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobDTO Dto)
         {
             var result =await _Mediator.Send(new CreateJobCommand { CreateJobDTO = Dto });
