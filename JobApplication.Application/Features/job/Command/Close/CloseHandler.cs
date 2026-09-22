@@ -5,16 +5,11 @@ using System.Security.Claims;
 
 namespace JobApplication.Application.Features.job.Command.Close
 {
-    public class CloseHandler : IRequestHandler<CloseCommand, Unit>
+    public class CloseHandler (IJobRepository jobRepository, IHttpContextAccessor accessor) : 
+        IRequestHandler<CloseCommand, Unit>
     {
-        private readonly IJobRepository _jobRepository;
-        private readonly IHttpContextAccessor _accessor;
-
-        public CloseHandler(IJobRepository jobRepository, IHttpContextAccessor accessor)
-        {
-            _jobRepository = jobRepository;
-            _accessor = accessor;
-        }
+        private readonly IJobRepository _jobRepository = jobRepository;
+        private readonly IHttpContextAccessor _accessor = accessor;
 
         public async Task<Unit> Handle(CloseCommand request, CancellationToken cancellationToken)
         {

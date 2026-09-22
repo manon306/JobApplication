@@ -16,7 +16,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 
-namespace JobApplication
+namespace JobApplication.API
 {
     public class Program
     {
@@ -86,6 +86,12 @@ namespace JobApplication
                     In = ParameterLocation.Header,
                     Description = "Enter your JWT token."
                 });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(xmlPath);
+                }
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -135,7 +141,10 @@ namespace JobApplication
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Job Application API v1");
+                });
             }
 
             app.UseHttpsRedirection();
