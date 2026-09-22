@@ -1,15 +1,11 @@
 ﻿using JobApplication.Application.Features.ApplicationUser.Command.Apply;
 using JobApplication.Application.Features.ApplicationUser.Command.CancleApp;
 using JobApplication.Application.Features.ApplicationUser.Command.UpdateStatus;
-using JobApplication.Application.Services;
-using JobApplication.Application.Services.imp;
 using JobApplication.DataModel.Constants;
 using JobApplication.DataModel.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace JobApplication.API.Controllers
 {
