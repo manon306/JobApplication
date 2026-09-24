@@ -129,6 +129,17 @@ namespace JobApplication.API
             var app = builder.Build();
             using (var scope = app.Services.CreateScope())
             {
+                var recurringJobManager = scope.ServiceProvider
+                    .GetRequiredService<IRecurringJobManager>();
+
+                recurringJobManager.AddOrUpdate<IAuthRepo>(
+                    "delete-expired-refresh-tokens",
+                    service => service.DeleteExpiredRefreshTokensAsync(),
+                    Cron.Daily);
+            }
+
+            using (var scope = app.Services.CreateScope())
+            {
                 var roleManager = scope.ServiceProvider
                     .GetRequiredService<RoleManager<IdentityRole>>();
 

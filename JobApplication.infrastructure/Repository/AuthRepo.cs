@@ -79,5 +79,17 @@ namespace JobApplication.infrastructure.Repository
             _context.Candidates.Add(candidate);
             await _context.SaveChangesAsync();
         }
+        public async Task DeleteExpiredRefreshTokensAsync()
+        {
+            var expiredTokens = await _context.RefreshTokens
+                .Where(x => x.ExpiresAt <= DateTime.UtcNow)
+                .ToListAsync();
+
+            if (expiredTokens.Count == 0)
+                return;
+
+            _context.RefreshTokens.RemoveRange(expiredTokens);
+            await _context.SaveChangesAsync();
+        }
     }
 }
