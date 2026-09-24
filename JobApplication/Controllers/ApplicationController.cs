@@ -29,7 +29,7 @@ namespace JobApplication.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Apply(int jobId)
         {
-            var result = _mediator.Send(new ApplyCommand { jobId =  jobId });
+            var result = await _mediator.Send(new ApplyCommand { jobId =  jobId });
 
             return Ok(result);
         }
@@ -49,7 +49,7 @@ namespace JobApplication.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CancleApp(int id)
         {
-            var result = _mediator.Send(new CancleAppCommand { Id = id });
+            var result = await _mediator.Send(new CancleAppCommand { Id = id });
             return Ok(result);
         }
 

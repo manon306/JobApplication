@@ -1,4 +1,5 @@
 
+using Hangfire;
 using JobApplication.Application.Features.job.Command.CreateJob;
 using JobApplication.Application.interfaces;
 using JobApplication.Application.Services;
@@ -8,6 +9,7 @@ using JobApplication.DataModel.Constants;
 using JobApplication.DataModel.Entities;
 using JobApplication.infrastructure.Persistence;
 using JobApplication.infrastructure.Repository;
+using JobApplication.infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -33,12 +35,20 @@ namespace JobApplication.API
             builder.Services.AddScoped<IJobRepository, JobRepository>();
             builder.Services.AddScoped<IApplicationRepo, ApplicationRepo>();
             builder.Services.AddScoped<IApplicationService, ApplicationService>();
+            builder.Services.AddScoped<INotificationService, EmailNotificationServices>();
+            builder.Services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
             builder.Services.AddScoped<IAuthRepo, AuthRepo>();
             builder.Services.AddScoped<IAuthService, AuthServices>();
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddMediatR(cfg =>
                     cfg.RegisterServicesFromAssembly(typeof(CreateJobCommand).Assembly));
+            builder.Services.AddHangfire(config => config
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(
+                builder.Configuration.GetConnectionString("HangfireConnection")));
 
+            builder.Services.AddHangfireServer();
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDBContext>()
                 .AddDefaultTokenProviders();
@@ -150,7 +160,7 @@ namespace JobApplication.API
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.UseHangfireDashboard("/hangfire");
 
             try
             {

@@ -15,9 +15,10 @@ namespace JobApplication.Application.Features.ApplicationUser.Command.Apply
         private readonly IHttpContextAccessor _accessor;
         private readonly IApplicationRepo _appRepo;
 
-        public ApplyHandler(IHttpContextAccessor accessor)
+        public ApplyHandler(IHttpContextAccessor accessor, IApplicationRepo appRepo)
         {
             _accessor = accessor;
+            _appRepo = appRepo;
         }
 
         public async Task<Unit> Handle(ApplyCommand request, CancellationToken cancellationToken)
